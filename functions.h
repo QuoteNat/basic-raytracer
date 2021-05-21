@@ -3,7 +3,7 @@
 
 /**
  * @brief Defines an RGB value
- * 
+ *
  */
 struct COLOR {
     int rgb[3];
@@ -11,7 +11,7 @@ struct COLOR {
 
 /**
  * @brief Defines a sphere object in a 3d space.
- * 
+ *
  */
 struct SPHERE {
     std::string name;
@@ -21,6 +21,6 @@ struct SPHERE {
 };
 
 arma::Row<double> CanvasToViewport(double x, double y, double Cw, double Ch,  double Vw, double Vh, double d);
-COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, SPHERE spheres[3], COLOR background);
+COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, COLOR background);
 
 #endif // FUNCTIONS_H_INCLUDED

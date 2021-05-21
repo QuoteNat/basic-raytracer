@@ -55,11 +55,11 @@ void IntersectRaySphere(arma::Row<double> O, arma::Row<double> D, SPHERE sphere,
  * @param background The background color.
  * @return COLOR The color of the object the ray intersects, or background if there are no intersections.
  */
-COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, SPHERE spheres[3], COLOR background) {
+COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE> &spheres, COLOR background) {
     double closest_t = INFINITY;
     SPHERE closest_sphere;
     closest_sphere.color = background;
-    for(int i=0; i < 3; i++) {
+    for(int i=0; i < spheres.size(); i++) {
         SPHERE sphere = spheres[i];
         double intersects[2];
         IntersectRaySphere(O, D, sphere, intersects);

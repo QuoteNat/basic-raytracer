@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <armadillo>
+#include <vector>
 #include "functions.h"
 
 //Screen dimension constants
@@ -12,7 +13,7 @@ const double VIEWPORT_DISTANCE = 1;
 const COLOR BACKGROUND = {{255, 255, 255}};
 
 // prototypes
-void initSpheres(SPHERE spheres[3]);
+void initSpheres(std::vector<SPHERE> &);
 
 int main () {
     // variables
@@ -22,7 +23,7 @@ int main () {
     arma::Row<double> O = arma::rowvec({0, 0, 0});
 
     //spheres
-    SPHERE spheres[3];
+    std::vector<SPHERE> spheres;
     initSpheres(spheres);
     // create window and renderer
     SDL_Window *window;
@@ -42,7 +43,7 @@ int main () {
             // draw the point
             SDL_SetRenderDrawColor(renderer, color.rgb[0], color.rgb[1], color.rgb[2], 255);
             SDL_RenderDrawPoint(renderer, (SCREEN_WIDTH/2) + x, (SCREEN_HEIGHT / 2) - y);
-            SDL_RenderPresent(renderer);
+            //SDL_RenderPresent(renderer);
         }
     }
 
@@ -55,6 +56,8 @@ int main () {
                 quit = true;
                 break;
         }
+        SDL_RenderPresent(renderer);
+
     }
     //cleanup
     SDL_DestroyRenderer(renderer);
@@ -63,23 +66,30 @@ int main () {
 
 /**
  * @brief Initializes the spheres in spheres.
- * 
- * @param spheres An array of SPHERE structs of size 3.
+ *
+ * @param spheres A vector of spheres.
  */
-void initSpheres(SPHERE spheres[3]) {
+void initSpheres(std::vector<SPHERE> &spheres) {
+    SPHERE temp, temp2, temp3;
     // circle 1
-    spheres[0].center = {0, -1, 3};
-    spheres[0].radius = 1;
-    spheres[0].color.rgb[0] = 255;
-    spheres[0].name = "Red";
+    temp.center = {0, -1, 3};
+    temp.radius = 1;
+    temp.color.rgb[0] = 255;
+    temp.name = "Red";
+    spheres.push_back(temp);
     // circle 2
-    spheres[1].center = {2, 0, 4};
-    spheres[1].radius = 1;
-    spheres[1].color.rgb[2] = 255;
-    spheres[1].name = "Blue";
+    temp2.center = {2, 0, 4};
+    temp2.radius = 1;
+    temp2.color.rgb[2] = 255;
+    temp2.name = "Blue";
+    spheres.push_back(temp2);
+
     // circle 3
-    spheres[2].center = {-2, 0, 4};
-    spheres[2].radius = 1;
-    spheres[2].color.rgb[1] = 255;
-    spheres[2].name = "Green";
+    temp3.center = {-2, 0, 4};
+    temp3.radius = 1;
+    temp3.color.rgb[1] = 255;
+    temp3.name = "Green";
+    spheres.push_back(temp3);
+
+    std::cout << spheres.size();
 }
