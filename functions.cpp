@@ -44,6 +44,46 @@ void IntersectRaySphere(arma::Row<double> O, arma::Row<double> D, SPHERE sphere,
     }
 }
 
+double magnitude (arma::Row<double> vec) {
+    return sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
+}
+
+double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Row<double> N) {
+    double intensity = 0.0;
+    for (int i=0; i < lights.size(); i++) {
+        // if light type is ambient
+        if (lights[i].type == AMBIENT) {
+            // add intensity to i
+            intensity += lights[i].intensity;
+        } else {
+            arma::Row<double> L;
+            // set L to the position of the point light, or the direction of the DIRECTIONAL light.
+            if (lights[i].type == POINT) {
+                L = lights[i].position - P;
+            } else {
+                L = lights[i].direction;
+            }
+
+            // get he dot product of N dot L.
+            double n_dot_l = arma::dot(N, L);
+            if (n_dot_l > 0) {
+                // intensity + the normalized value of n_dot_l
+                intensity += lights[i].intensity * n_dot_l / (magnitude(L) * magnitude(N));
+            }
+        }
+    }
+    return intensity;
+}
+
+
+COLOR adjustColor(COLOR color, double intensity) {
+    // change the intensity of the color value by intensity
+    for (int i=0; i < 3; i++) {
+        color.rgb[i] = int(color.rgb[i] * intensity);
+    }
+    return color;
+}
+
 /**
  * @brief Performs a raytrace and returns the color of the collision if there are any.
  *
@@ -55,22 +95,38 @@ void IntersectRaySphere(arma::Row<double> O, arma::Row<double> D, SPHERE sphere,
  * @param background The background color.
  * @return COLOR The color of the object the ray intersects, or background if there are no intersections.
  */
-COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE> &spheres, COLOR background) {
+COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, std::vector<LIGHT>& lights,COLOR background) {
+    // closest intersectioin
     double closest_t = INFINITY;
-    SPHERE closest_sphere;
-    closest_sphere.color = background;
+    SPHERE* closest_sphere = NULL;
+    SPHERE temp;
+    // color for when no intersects are found/background color
+    //closest_sphere.color = background;
+    // for each sphere in the scene
     for(int i=0; i < spheres.size(); i++) {
         SPHERE sphere = spheres[i];
         double intersects[2];
+        // check for intersects between sphere and the ray
         IntersectRaySphere(O, D, sphere, intersects);
+        // if an intersect is within the acceptable range and is less than closest_t, set closest_t to the intersect and the closest_sphere to sphere.
         if (intersects[0] > t_min && intersects[0] < t_max && intersects[0] < closest_t) {
             closest_t = intersects[0];
-            closest_sphere = sphere;
+            temp = sphere;
+            closest_sphere = &temp;
         }
         if (intersects[1] > t_min && intersects[1] < t_max && intersects[1] < closest_t) {
             closest_t = intersects[1];
-            closest_sphere = sphere;
+            temp = sphere;
+            closest_sphere = &temp;
         }
     }
-    return closest_sphere.color;
+
+    if (closest_sphere == NULL) return background;
+
+    arma::Row<double> P = O + arma::as_scalar(closest_t) * D; // Compute intersection [broken]
+    arma::Row<double> N = P - closest_sphere->center; // Compute sphere normal at intersection
+    N = N / magnitude(N); // normalize
+    return adjustColor(closest_sphere->color, ComputeLighting(lights, P, N));
 }
+
+
