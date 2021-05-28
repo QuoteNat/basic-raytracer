@@ -20,6 +20,7 @@ struct SPHERE {
     arma::Row<double> center = arma::rowvec({0, 0, 0});
     double radius = 0;
     struct COLOR color = {{0, 0, 0}};
+    int specular = -1;
 };
 
 struct LIGHT {

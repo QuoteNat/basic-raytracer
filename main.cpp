@@ -83,12 +83,14 @@ void initSpheres(std::vector<SPHERE> &spheres) {
     temp.radius = 1;
     temp.color = {255, 0, 0};
     temp.name = "Red";
+    temp.specular = 500;
     spheres.push_back(temp);
     // blue
     temp2.center = {2, 0, 4};
     temp2.radius = 1;
     temp2.color = {0, 0, 255};
     temp2.name = "Blue";
+    temp2.specular = 500;
     spheres.push_back(temp2);
 
     // green
@@ -96,6 +98,7 @@ void initSpheres(std::vector<SPHERE> &spheres) {
     temp3.radius = 1;
     temp3.color = {0, 255, 0};
     temp3.name = "Green";
+    temp3.specular = 10;
     spheres.push_back(temp3);
 
     // yellow
@@ -103,6 +106,7 @@ void initSpheres(std::vector<SPHERE> &spheres) {
     temp4.center = {0, -5001, 0};
     temp4.radius = 5000;
     temp4.color = {255, 255, 0};
+    temp4.specular = 1000;
     spheres.push_back(temp4);
 
     std::cout << spheres.size();

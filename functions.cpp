@@ -48,7 +48,7 @@ double magnitude (arma::Row<double> vec) {
     return sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
 }
 
-double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Row<double> N) {
+double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Row<double> N, arma::Row<double> V, int s) {
     double intensity = 0.0;
     for (int i=0; i < lights.size(); i++) {
         // if light type is ambient
@@ -64,11 +64,21 @@ double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Ro
                 L = lights[i].direction;
             }
 
+            // Diffuse
             // get he dot product of N dot L.
             double n_dot_l = arma::dot(N, L);
             if (n_dot_l > 0) {
                 // intensity + the normalized value of n_dot_l
                 intensity += lights[i].intensity * n_dot_l / (magnitude(L) * magnitude(N));
+            }
+
+            // Specular
+            if (s != -1) {
+                arma::Row<double> R = 2 * N * arma::dot(N, L) - L;
+                double r_dot_v = dot(R, V);
+                if (r_dot_v > 0) {
+                    intensity += lights[i].intensity * std::pow(r_dot_v / (magnitude(R) * magnitude(V)), s);
+                }
             }
         }
     }
@@ -80,6 +90,11 @@ COLOR adjustColor(COLOR color, double intensity) {
     // change the intensity of the color value by intensity
     for (int i=0; i < 3; i++) {
         color.rgb[i] = int(color.rgb[i] * intensity);
+        if (color.rgb[i] > 255.0) {
+            color.rgb[i] = 255.0;
+        } else if (color.rgb[i] < 0.0) {
+            color.rgb[i] = 0.0;
+        }
     }
     return color;
 }
@@ -95,7 +110,7 @@ COLOR adjustColor(COLOR color, double intensity) {
  * @param background The background color.
  * @return COLOR The color of the object the ray intersects, or background if there are no intersections.
  */
-COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, std::vector<LIGHT>& lights,COLOR background) {
+COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, std::vector<LIGHT>& lights, COLOR background) {
     // closest intersectioin
     double closest_t = INFINITY;
     SPHERE* closest_sphere = NULL;
@@ -126,7 +141,7 @@ COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_
     arma::Row<double> P = O + arma::as_scalar(closest_t) * D; // Compute intersection [broken]
     arma::Row<double> N = P - closest_sphere->center; // Compute sphere normal at intersection
     N = N / magnitude(N); // normalize
-    return adjustColor(closest_sphere->color, ComputeLighting(lights, P, N));
+    return adjustColor(closest_sphere->color, ComputeLighting(lights, P, N, -D, closest_sphere->specular));
 }
 
 
