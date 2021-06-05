@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1622237781 source:/home/nathan/Projects/C++/Comp-graphics/Basic-raytracer/basic-raytracer/main.cpp
+1622852842 source:/home/nathan/Projects/C++/Comp-graphics/Basic-raytracer/basic-raytracer/main.cpp
 	<SDL.h>
 	<iostream>
 	<armadillo>
@@ -355,9 +355,9 @@
 
 1621378356 /home/nathan/Projects/C++/Comp-graphics/Basic-raytracer/basic-raytracer/structs.h
 
-1622237719 /home/nathan/Projects/C++/Comp-graphics/Basic-raytracer/basic-raytracer/functions.h
+1622852906 /home/nathan/Projects/C++/Comp-graphics/Basic-raytracer/basic-raytracer/functions.h
 
-1621654610 source:/home/nathan/Projects/C++/Comp-graphics/Basic-raytracer/basic-raytracer/functions.cpp
+1622852672 source:/home/nathan/Projects/C++/Comp-graphics/Basic-raytracer/basic-raytracer/functions.cpp
 	<armadillo>
 	<cmath>
 	<iterator>

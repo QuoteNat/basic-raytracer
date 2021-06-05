@@ -8,7 +8,7 @@ enum LightType{AMBIENT, POINT, DIRECTIONAL};
  *
  */
 struct COLOR {
-    int rgb[3];
+    arma::Row<double> rgb;
 };
 
 /**
@@ -17,10 +17,16 @@ struct COLOR {
  */
 struct SPHERE {
     std::string name;
+    // the center of the sphere in 3d space
     arma::Row<double> center = arma::rowvec({0, 0, 0});
+    // the radius of the sphere
     double radius = 0;
-    struct COLOR color = {{0, 0, 0}};
+    // the color of the sphere
+    struct COLOR color;
+    // how "shiny" the sphere is
     int specular = -1;
+    // how reflective the sphere is from 0 to 1.
+    double reflective = 0;
 };
 
 struct LIGHT {
@@ -31,6 +37,6 @@ struct LIGHT {
 };
 
 arma::Row<double> CanvasToViewport(double x, double y, double Cw, double Ch,  double Vw, double Vh, double d);
-COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, std::vector<LIGHT>& lights,COLOR background);
+COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, std::vector<LIGHT>& lights, COLOR background, int recursionDepth);
 
 #endif // FUNCTIONS_H_INCLUDED

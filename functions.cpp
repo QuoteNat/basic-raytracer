@@ -4,6 +4,8 @@
 #include <iostream>
 #include "functions.h"
 
+void ClosestIntersection(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, double& closest_t, SPHERE*& closest_sphere, std::vector<SPHERE>& spheres, SPHERE& temp);
+
 /**
  * @brief Determines which pixel on the viewport corresponds with the canvas pixel (x, y).
  *
@@ -48,7 +50,11 @@ double magnitude (arma::Row<double> vec) {
     return sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
 }
 
-double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Row<double> N, arma::Row<double> V, int s) {
+arma::Row<double> ReflectRay(arma::Row<double> R, arma::Row<double> N) {
+    return 2 * N * arma::dot(N, R) - R;
+}
+
+double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Row<double> N, arma::Row<double> V, int s, std::vector<SPHERE>& spheres) {
     double intensity = 0.0;
     for (int i=0; i < lights.size(); i++) {
         // if light type is ambient
@@ -57,11 +63,23 @@ double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Ro
             intensity += lights[i].intensity;
         } else {
             arma::Row<double> L;
+            double t_max;
             // set L to the position of the point light, or the direction of the DIRECTIONAL light.
             if (lights[i].type == POINT) {
                 L = lights[i].position - P;
+                t_max = 1;
             } else {
                 L = lights[i].direction;
+                t_max = INFINITY;
+            }
+
+            // Shadow Check
+            SPHERE* shadow_sphere = NULL;
+            double shadow_t = INFINITY;
+            SPHERE temp;
+            ClosestIntersection(P, L, 0.001, t_max, shadow_t, shadow_sphere, spheres, temp);
+            if (shadow_sphere != NULL) {
+                continue;
             }
 
             // Diffuse
@@ -74,7 +92,7 @@ double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Ro
 
             // Specular
             if (s != -1) {
-                arma::Row<double> R = 2 * N * arma::dot(N, L) - L;
+                arma::Row<double> R = ReflectRay(L, N);
                 double r_dot_v = dot(R, V);
                 if (r_dot_v > 0) {
                     intensity += lights[i].intensity * std::pow(r_dot_v / (magnitude(R) * magnitude(V)), s);
@@ -85,39 +103,7 @@ double ComputeLighting(std::vector<LIGHT> &lights, arma::Row<double> P, arma::Ro
     return intensity;
 }
 
-
-COLOR adjustColor(COLOR color, double intensity) {
-    // change the intensity of the color value by intensity
-    for (int i=0; i < 3; i++) {
-        color.rgb[i] = int(color.rgb[i] * intensity);
-        if (color.rgb[i] > 255.0) {
-            color.rgb[i] = 255.0;
-        } else if (color.rgb[i] < 0.0) {
-            color.rgb[i] = 0.0;
-        }
-    }
-    return color;
-}
-
-/**
- * @brief Performs a raytrace and returns the color of the collision if there are any.
- *
- * @param O Origin vector.
- * @param D Direction vector.
- * @param t_min Minimum distance of the ray.
- * @param t_max Maximum distance of the ray.
- * @param spheres An array containing the SPHERE objects in the scene.
- * @param background The background color.
- * @return COLOR The color of the object the ray intersects, or background if there are no intersections.
- */
-COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, std::vector<LIGHT>& lights, COLOR background) {
-    // closest intersectioin
-    double closest_t = INFINITY;
-    SPHERE* closest_sphere = NULL;
-    SPHERE temp;
-    // color for when no intersects are found/background color
-    //closest_sphere.color = background;
-    // for each sphere in the scene
+void ClosestIntersection(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, double& closest_t, SPHERE*& closest_sphere, std::vector<SPHERE>& spheres, SPHERE& temp) {
     for(int i=0; i < spheres.size(); i++) {
         SPHERE sphere = spheres[i];
         double intersects[2];
@@ -135,13 +121,52 @@ COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_
             closest_sphere = &temp;
         }
     }
+}
+
+/**
+ * @brief Performs a raytrace and returns the color of the collision if there are any.
+ *
+ * @param O Origin vector.
+ * @param D Direction vector.
+ * @param t_min Minimum distance of the ray.
+ * @param t_max Maximum distance of the ray.
+ * @param spheres An array containing the SPHERE objects in the scene.
+ * @param background The background color.
+ * @return COLOR The color of the object the ray intersects, or background if there are no intersections.
+ */
+COLOR TraceRay(arma::Row<double> O, arma::Row<double> D, double t_min, double t_max, std::vector<SPHERE>& spheres, std::vector<LIGHT>& lights, COLOR background, int recursionDepth) {
+    // closest intersectioin
+    double closest_t = INFINITY;
+    SPHERE* closest_sphere = NULL;
+    SPHERE temp;
+    // color for when no intersects are found/background color
+    // for each sphere in the scene
+    ClosestIntersection(O, D, t_min, t_max, closest_t, closest_sphere, spheres, temp);
 
     if (closest_sphere == NULL) return background;
 
     arma::Row<double> P = O + arma::as_scalar(closest_t) * D; // Compute intersection [broken]
     arma::Row<double> N = P - closest_sphere->center; // Compute sphere normal at intersection
     N = N / magnitude(N); // normalize
-    return adjustColor(closest_sphere->color, ComputeLighting(lights, P, N, -D, closest_sphere->specular));
+    // get local color
+    //COLOR local_color = adjustColor(closest_sphere->color, ComputeLighting(lights, P, N, -D, closest_sphere->specular, spheres));
+    COLOR local_color;
+    local_color.rgb = closest_sphere->color.rgb * ComputeLighting(lights, P, N, -D, closest_sphere->specular, spheres);
+    //std::cout << "Local color" << local_color.rgb << std::endl;
+    local_color.rgb = arma::clamp(local_color.rgb, 0.0, 255.0);
+    // If we hit the recursion limit or the object is not reflective, return.
+    double r = closest_sphere->reflective;
+    if (recursionDepth <= 0 || r <= 0) {
+        return local_color;
+    }
+
+    // Compute the reflected color
+    arma::Row<double> R = ReflectRay(-D, N);
+    COLOR reflected_color = {TraceRay(P, R, 0.001, INFINITY, spheres, lights, background, recursionDepth-1)};
+    //std::cout << "Reflected color" << reflected_color.rgb << std::endl;
+    COLOR return_color = {local_color.rgb * (1 - r) + reflected_color.rgb * r};
+    //std::cout <<  "Return color" << return_color.rgb << std::endl;
+    return return_color;
 }
 
 

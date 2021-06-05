@@ -11,6 +11,7 @@ const double VIEWPORT_WIDTH = 1;
 const double VIEWPORT_HEIGHT = 1;
 const double VIEWPORT_DISTANCE = 1;
 const COLOR BACKGROUND = {{0, 0, 0}};
+const int REFLECTION_RECURSION_DEPTH = 3;
 
 // prototypes
 void initSpheres(std::vector<SPHERE> &);
@@ -45,9 +46,10 @@ int main () {
             // get distance
             arma::Row<double> D = CanvasToViewport(x, y, SCREEN_WIDTH, SCREEN_HEIGHT, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, VIEWPORT_DISTANCE);
             // ray trace
-            COLOR color = TraceRay(O, D, 1, INFINITY, spheres, lights, BACKGROUND);
+            COLOR color = TraceRay(O, D, 1, INFINITY, spheres, lights, BACKGROUND, REFLECTION_RECURSION_DEPTH);
             // draw the point
-            SDL_SetRenderDrawColor(renderer, color.rgb[0], color.rgb[1], color.rgb[2], 255);
+            std::cout << color.rgb << std::endl;
+            SDL_SetRenderDrawColor(renderer, int(color.rgb[0]), int(color.rgb[1]), int(color.rgb[2]), 255);
             SDL_RenderDrawPoint(renderer, (SCREEN_WIDTH/2) + x, (SCREEN_HEIGHT / 2) - y);
             //SDL_RenderPresent(renderer);
         }
@@ -81,32 +83,36 @@ void initSpheres(std::vector<SPHERE> &spheres) {
     // red
     temp.center = {0, -1, 3};
     temp.radius = 1;
-    temp.color = {255, 0, 0};
+    temp.color.rgb = {255, 0, 0};
     temp.name = "Red";
     temp.specular = 500;
+    temp.reflective = 0.2;
     spheres.push_back(temp);
     // blue
     temp2.center = {2, 0, 4};
     temp2.radius = 1;
-    temp2.color = {0, 0, 255};
+    temp2.color.rgb = {0, 0, 255};
     temp2.name = "Blue";
     temp2.specular = 500;
+    temp2.reflective = 0.3;
     spheres.push_back(temp2);
 
     // green
     temp3.center = {-2, 0, 4};
     temp3.radius = 1;
-    temp3.color = {0, 255, 0};
+    temp3.color.rgb = {0, 255, 0};
     temp3.name = "Green";
     temp3.specular = 10;
+    temp3.reflective = 0.4;
     spheres.push_back(temp3);
 
     // yellow
     SPHERE temp4;
     temp4.center = {0, -5001, 0};
     temp4.radius = 5000;
-    temp4.color = {255, 255, 0};
+    temp4.color.rgb = {255, 255, 0};
     temp4.specular = 1000;
+    temp4.reflective = 0.5;
     spheres.push_back(temp4);
 
     std::cout << spheres.size();
